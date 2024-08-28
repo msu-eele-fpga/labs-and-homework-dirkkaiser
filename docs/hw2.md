@@ -20,7 +20,7 @@ int main(){
 ```
 
 | Table | Column 1| Column 2|
------------------------------
+|-------|---------|---------|
 | Row 1 | content | content |
 | Row 2 | content | content |
 
