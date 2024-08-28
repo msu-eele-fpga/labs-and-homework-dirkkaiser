@@ -1,10 +1,16 @@
 #Heading
+
 **This is bold text**
+
 _This is italicized_
+
 >This is quoted text
+
 >[!CAUTION]
 >This is a alert
+
 Here is a code block with syntax highlighting
+
 ```C
 #include <stdio.h>
 
@@ -12,10 +18,11 @@ int main(){
     printf("Hello World\n");
 }
 ```
+
 | Table | Column 1| Column 2|
------------------------------
-| Row 1 | | |
-| Row 2 | | |
+|-------|---------|---------|
+| Row 1 | content | content |
+| Row 2 | content | content |
 
 - Unordered List
 - Trevor
