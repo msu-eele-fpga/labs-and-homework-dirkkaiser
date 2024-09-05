@@ -1,0 +1,21 @@
+vsim -gui work.synchronizer_tb
+# vsim -gui work.synchronizer_tb 
+# Start time: 20:53:20 on Sep 04,2024
+# Loading std.standard
+# Loading std.textio(body)
+# Loading ieee.std_logic_1164(body)
+# Loading std.env(body)
+# Loading work.synchronizer_tb(testbench)
+# Loading ieee.numeric_std(body)
+# Loading work.synchronizer(synchronizer_arch)
+add wave -position insertpoint  \
+sim:/synchronizer_tb/dut/clk
+add wave -position insertpoint  \
+sim:/synchronizer_tb/dut/async
+add wave -position insertpoint  \
+sim:/synchronizer_tb/dut/sync
+run
+# ** Note: all tests passed!
+#    Time: 100 ns  Iteration: 0  Instance: /synchronizer_tb
+# 1
+# Break in Process check_output at C:/Users/Dirk Kaiser/Documents/MSU/FALL2024/EELE467/content/sim/synchronizer/synchronizer_tb.vhd line 111
