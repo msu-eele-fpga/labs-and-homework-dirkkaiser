@@ -2,7 +2,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 package tb_pkg is
-	constant CLK_PERIOD := 20ns;
+	constant CLK_PERIOD : time := 20ns;
 	constant COMBINATIONAL_DELAY : time := 1ns;
 	
 	procedure wait_for_clock_edge(signal clk: in std_ulogic);

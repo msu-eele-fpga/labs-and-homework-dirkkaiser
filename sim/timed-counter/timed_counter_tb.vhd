@@ -69,6 +69,8 @@ begin
 	print("testing 100 ns timer: enabled");
 	wait_for_clock_edge(clk_tb);
 	enable_100ns_tb <= true;
+	-- wait so that signals are alligned
+	wait for 20 ns;
 	
 	-- loop for the number of clock that is equal to the timer's period
 	for i in 0 to (HUNDRED_NS / CLK_PERIOD) - 1 loop
@@ -76,7 +78,8 @@ begin
 		predict_counter_done(HUNDRED_NS, enable_100ns_tb, done_100ns_tb, i);
 	end loop;
 	
-	-- add other test cases here
+	--
+	
 	
 	-- testbench is done :)
 	std.env.finish;
