@@ -26,11 +26,11 @@ COUNTER : process(clk) -- clk sensitivity list
 begin
 	if(rising_edge(clk)) then -- on clock edge
 		if(enable) then
-				if count < COUNTER_LIMIT - 1 then
+				if count < COUNTER_LIMIT then
 					count <= count + 1; -- count up if not at max and enable is true
 					done <= false;
 				else
-					count <= 0;
+					count <= 1;
 					done <= true;
 				end if;
 		else
