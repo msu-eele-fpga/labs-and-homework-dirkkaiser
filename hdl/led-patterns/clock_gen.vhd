@@ -26,7 +26,7 @@ architecture clock_gen_arch of clock_gen is
 
 constant clk_freq : unsigned(25 downto 0) := to_unsigned(0.5 sec / system_clock_period, 26); -- I want my clk to toggle at half the period
 --constant clk_freq : unsigned(25 downto 0) := "00000000000000000000001000";
-signal count_limit : unsigned(33 downto 0); -- 8 bits from base_period 26 from clock freq
+signal count_limit : unsigned(29 downto 0); -- 8 bits from base_period 26 from clock freq
 signal count_limit_int : integer;
 signal count_int : integer;
 
@@ -54,7 +54,7 @@ signal internal_choice : std_ulogic := '0';
 
 begin
 
-	count_limit <= clk_freq * base_period;
+	count_limit <= clk_freq(25 downto 4) * base_period;
 	count_limit_int <= to_integer(count_limit);
 
 	BASE_CLOCK : process (clk, rst)

@@ -1,5 +1,6 @@
 -- Lab-4 led pattern generator
 -- Dirk Kaiser 2024
+-- altera vhdl_input_version vhdl_2008
 
 library ieee;
 use ieee.std_logic_1164.all;
