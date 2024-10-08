@@ -13,7 +13,7 @@ The above figure shows the block diagram used to create the system arcitecture o
 
 ![Register Map](assets/lab-6_register.png)
 
-The register map above shows the previously described three new registers and which address they coorispond with. It also shows the bitfield for each register as well as other useful information.
+The register map above shows the previously described three new registers and which address they correspond with. It also shows the bitfield for each register as well as other useful information.
 
 ## Platform Designer
 
