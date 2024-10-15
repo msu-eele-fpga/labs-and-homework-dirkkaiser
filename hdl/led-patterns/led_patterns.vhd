@@ -112,7 +112,8 @@ signal pat_3 : std_ulogic_vector(6 downto 0);
 signal pat_4 : std_ulogic_vector(6 downto 0);
 
 -- signal for state machine output
-signal sm_out : std_ulogic_vector(6 downto 0);
+signal sm_out : std_ulogic_vector(7 downto 0);
+
 -- count signal
 signal count_int : integer := 0;
 
@@ -244,24 +245,23 @@ output_logic : process (all)
 begin
 	case(state) is
 		when disp =>
-			sm_out <= "000" & switches;
+			sm_out(6 downto 0) <= "000" & switches;
 		when S0 =>
-			sm_out <= pat_0;
+			sm_out(6 downto 0) <= pat_0;
 		when S1 =>
-			sm_out <= pat_1;
+			sm_out(6 downto 0) <= pat_1;
 		when S2 =>
-			sm_out <= pat_2;
+			sm_out(6 downto 0) <= pat_2;
 		when S3 =>
-			sm_out <= pat_3;
+			sm_out(6 downto 0) <= pat_3;
 		when S4 =>
-			sm_out <= pat_4;
+			sm_out(6 downto 0) <= pat_4;
 		when others =>
-			sm_out <= "0000000";
+			sm_out(6 downto 0) <= "0000000";
 	end case;
 end process output_logic;
 ----------------------------------------------------------------
-
-led(7) <= base_clk;
-led(6 downto 0) <= led_reg(6 downto 0) when hps_led_control else sm_out;
+sm_out(7) <= base_clk;
+led(7 downto 0) <= led_reg(7 downto 0) when hps_led_control else sm_out;
 
 end architecture;
