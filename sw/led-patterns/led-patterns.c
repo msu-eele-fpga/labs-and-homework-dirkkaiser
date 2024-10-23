@@ -6,6 +6,7 @@
 #include <fcntl.h> // for file open flags
 #include <unistd.h> // for getting the page size
 #include <ctype.h>
+#include <signal.h>
 
 
 void usage() // function to print help msg
@@ -28,8 +29,8 @@ void  INThandler(int sig) // function for the exiting using ^C
      char  c;
 
      signal(sig, SIG_IGN);
-     printf("OUCH, did you hit Ctrl-C?\n"
-            "Do you really want to quit? [y/n] ");
+     printf("\nOUCH, did you hit Ctrl-C?\n"
+            "Do you really want to quit? [y/n] \n");
      c = getchar();
      if (c == 'y' || c == 'Y')
           // I think this is where I would set the device back into hardware control
@@ -42,6 +43,8 @@ void  INThandler(int sig) // function for the exiting using ^C
 int main (int argc, char **argv)
 {
   int vflag = 0;
+  int pflag = 0;
+  int fflag = 0;
   char *pvalue = NULL;
   char *fvalue = NULL;
   int index;
@@ -55,26 +58,23 @@ int main (int argc, char **argv)
       {
       case 'h':
         usage();
+        return 1;
         break;
       case 'v':
         vflag = 1;
         break;
       case 'p':
         pvalue = optarg;
+        pflag = 1;
         break;
       case 'f':
         fvalue = optarg;
+        flag = 1;
         break;
       case '?':
         if (optopt == 'p' || optopt == 'f')
         {
           fprintf (stderr, "Option -%c requires an argument.\n\n", optopt);
-          usage();
-          return 1;
-        }
-        if (optopt == 'p' && optopt == 'f')
-        {
-          fprintf (stderr, "Cannout use option -p and -f at the same time.\n\n");
           usage();
           return 1;
         }
@@ -94,6 +94,12 @@ int main (int argc, char **argv)
         abort ();
       }
 
+  if (pflag == 1 && fflag == 1)
+  {
+      fprintf (stderr, "Cannout use option -p and -f at the same time.\n\n");
+      usage();
+      return 1;
+  }
   for (index = optind; index < argc; index++)
     printf ("Non-option argument %s\n", argv[index]);
 
