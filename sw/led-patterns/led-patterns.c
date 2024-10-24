@@ -108,17 +108,19 @@ int main(int argc, char **argv)
                 usage();
                 return 1;
             }
-            for (int 1 = optind - 1; i < argc; i = i + 2) // grabs every other arg
+            for (int i = optind - 1; i < argc; i = i + 2) // grabs every other arg
             {
                 patterns[i / 2] = strtoul(argv[i], NULL, 0);
+                fprintf(stderr, "Pattern[%d] = %d"i/2,patterns[i/2]);
             }
             for (int j = optind; j < argc; j = j + 2) // grabs the other every other arg
             {
                 times[j / 2] = strtoul(argv[j], NULL, 0);
+                fprintf(stderr, "Time[%d] = %d"j/2,patterns[j/2]);
             }
             break;
         case 'f': // file
-            strcpy(fvalue, optarg, sizeof(fvalue) - 1); // copy file name
+            strcpy(fvalue, optarg); // copy file name
             fflag = 1;
             break;
         case '?': // others
