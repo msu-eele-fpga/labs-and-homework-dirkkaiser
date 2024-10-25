@@ -73,7 +73,8 @@ void usage()
  */
 void dectobin(uint32_t dec, char *binArray)
 {
-    int bits = sizeof(dec) * 8;
+    int bits = [8]; // this should probably be done with a some sort of sizeof() function
+    // but that wasnt working so it's now just 8 cause every pattern is only 8 bits
     for (int i = 0; i < bits; i++)
     {
         binArray[bits - 1 - i] = (dec & (1UL << i)) ? '1' : '0';
@@ -112,17 +113,20 @@ void INThandler(int sig)
     char c;
 
     signal(sig, SIG_IGN);
-    fprintf(stdout, "Do you really want to quit? [y/n] \n");
+    fprintf(stdout, "\nDo you really want to quit? [y/n] \n");
     c = getchar();
     if (c == 'y' || c == 'Y')
+    {
         // I think this is where I would set the device back into hardware control
         fprintf(stdout, "Setting back to hardware control.\n");
         exit(0);
+    }
     else
+    {
         signal(SIGINT, INThandler);
-    getchar(); // Get new line character
+        getchar(); // Get new line character
+    }
 }
-
 
 //-----------------------------------------------------------------------------
 // Our Main Program
@@ -166,12 +170,12 @@ int main(int argc, char **argv)
             }
             for (int i = optind - 1; i < argc; i = i + 2) // grabs every other arg
             {
-                patterns[i - optind + 1 / 2] = strtoul(argv[i], NULL, 0);
+                patterns[(i - optind + 1) / 2] = strtoul(argv[i], NULL, 0);
                 // fprintf(stderr, "Pattern[%d/2] = %x\n",i,patterns[i/2]);
             }
             for (int j = optind; j < argc; j = j + 2) // grabs the other every other arg
             {
-                times[j - optind / 2] = strtoul(argv[j], NULL, 0);
+                times[(j - optind) / 2] = strtoul(argv[j], NULL, 0);
                 // fprintf(stderr, "Time[%d/2] = %u\n",j,times[j/2]);
             }
             break;
@@ -218,7 +222,7 @@ int main(int argc, char **argv)
     {
         if (pflag == 1)
         {
-            for (int i = 1; i < ptn_cnt; i++)
+            for (int i = 0; i < ptn_cnt; i++)
             {
                 // write pattern using devmen
                 if (vflag == 1)
@@ -229,7 +233,7 @@ int main(int argc, char **argv)
         }
         else if (fflag == 1)
         {
-            for (int i = 1; i < ptn_cnt; i++)
+            for (int i = 0; i < ptn_cnt; i++)
             {
                 // write pattern using devmen
                 if (vflag == 1)
