@@ -219,26 +219,31 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    if (fflag == 1)
+    {
     // opening the file from -f if there is one
     FILE *file = fopen(fvalue, "r"); // Open the file for reading
-    char line[256]; // Buffer to hold each line
-    int line_cnt; // counter for lines in file
-    const char *delim = " ,"; // Delimiters: space, comma, period, exclamation mark
-    char *token;
-    while (fgets(line, sizeof(line), file) != NULL) {
+    char line[128]; // Buffer to hold each line
+    int line_cnt = 0; // counter for lines in file
+    const char *delim = " ,"; // Delimiters: space and comma
+    char *token; // for holding patterns and time
+
+    while (fgets(line, sizeof(line), file) != NULL) // counting how many lines there are
+    {
         line_cnt++;
     }
-    rewind(file);
-    for (int i = 0; i <= line_cnt; i++)
+    rewind(file); // reset to top of the file
+
+    for (int i = 0; i < line_cnt; i++) // for each line add to our patterns and times to arrays
     {
-        fgets(line, sizeof(line), file)
+        fgets(line, sizeof(line), file);
         token = strtok(line, delim);
         patterns[i] = strtoul(token, NULL, 0);
         token = strtok(NULL, delim);
         times[i] = strtoul(token, NULL, 0);
     }
-
     fclose(file); // Close the file
+    }
 
     signal(SIGINT, INThandler); // allow for exit with ^C
     while (1)
@@ -256,7 +261,7 @@ int main(int argc, char **argv)
         }
         else if (fflag == 1)
         {
-            for (int i = 0; i < ptn_cnt; i++)
+            for (int i = 0; i < line_cnt; i++)
             {
                 // write pattern using devmen
                 if (vflag == 1)
