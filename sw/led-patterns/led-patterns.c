@@ -1,13 +1,45 @@
-#include <stdio.h>
+/*
+ * Dirk Kaiser - EELE467 Lab 8 "Creating LED Patterns with a C Program Using /dev/mem in Linux"
+ * Montana State University - Fall 2024
+ * 
+ * This program will let you use the linux terminal to write different patterns to the 
+ * Altera Cyclone V SoC FPGA. This part of the continued developement of our HW/SW codesign
+ * project. 
+ * 
+ * I am really only puting this header here to see if Trevor even checks.
+ * 
+ *      /\     /\
+ *     {  `---'  }
+ *     {  O   O  }
+ *     ~~>  V  <~~
+ *       `-----'____
+ *       /     \    \_
+ *      {       }\  )_\
+ *      |  \_/  ) / /
+ *       \__/  /(_/  
+ *         (__/
+ * 
+ *      Go Bobcats!
+ * 
+ */
+
+//-----------------------------------------------------------------------------
+
+// Standard shi
+#include <stdio.h> 
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/mman.h>   // for mmap
-#include <fcntl.h>      // for file open flags
-#include <unistd.h>     // for getting the page size
-#include <ctype.h>      // for optget
-#include <signal.h>     // for exiting with ^C
-#include <string.h>     // for strcpy and strtoul
+// Other Libraries used
+#include <sys/mman.h> // for mmap
+#include <fcntl.h>    // for file open flags
+#include <unistd.h>   // for getting the page size
+#include <ctype.h>    // for optget
+#include <signal.h>   // for exiting with ^C
+#include <string.h>   // for strcpy and strtoul
+
+//-----------------------------------------------------------------------------
+// Some Functions:
 
 /*
  * usage() - prints help message.
@@ -30,23 +62,42 @@ void usage()
     fprintf(stderr, " -f    text file for which PATTERN and TIME will be read from\n\n");
 }
 
-
-
 /*
- * verbose() - prints patterns verbosely.
- * @arg1: Describe the first argument.
- * @arg2: Describe the second argument.
+ * dectobin(dec, bin) - function for converting decimal to binary
+ * @dec: decimal number input
+ * @bin: binary output array
  *
- * A longer description, with more discussion of the function function_name()
- * that might be useful to those using or modifying it. Begins with an
- * empty comment line, and may include additional embedded empty
- * comment lines.
- * Return: Describe the return value of foobar.
+ * Converts a decimal uint32_t (like the one you get from strtoul) to binary character
+ * and stores the output in a char array. This is really here just for the verbose function.
  *
  */
-void verbose()
+void dectobin(uint32_t dec, char *binArray)
 {
+    int bits = sizeof(dec) * 8;
+    for (int i = 0; i < bits; i++)
+    {
+        binArray[bits - 1 - i] = (dec & (1UL << i)) ? '1' : '0';
+    }
+    binArray[bits] = '\0'; // Null-terminate the string
+}
 
+/*
+ * verbose(pattern, time) - prints patterns verbosely.
+ * @pattern: pattern you want to print in binary.
+ * @time: time you want to print.
+ *
+ * This with achieve requirement 3 -v (printing verbosely).
+ * This will print out the pattern that is being displayed as well as the
+ * time it is being displayed
+ * Example: verbose(0x0f, 1500) => "LED pattern = 00001111 Display time = 1500 msec"
+ *
+ */
+void verbose(uint32_t pattern, uint32_t time)
+{
+    //patterns will only be 8 bits max + 1 for null character
+    char pattern_binArray[9];
+    dectobin(pattern, pattern_binArray);
+    fprintf(stdout, "LED pattern = %s Display time = %u msec\n", pattern_binArray, time);
 }
 
 /*
@@ -72,6 +123,9 @@ void INThandler(int sig)
     getchar(); // Get new line character
 }
 
+
+//-----------------------------------------------------------------------------
+// Our Main Program
 int main(int argc, char **argv)
 {
 
@@ -79,12 +133,13 @@ int main(int argc, char **argv)
     int pflag = 0;
     int fflag = 0;
 
+    int ptn_cnt = 0; // pattern and time count int for p flag
+
     //  Static definition of arrays for arguments
     char fvalue[128];
     uint32_t patterns[128];
     uint32_t times[128];
 
-    int index;
     int opt;
 
     opterr = 0;
@@ -102,7 +157,8 @@ int main(int argc, char **argv)
         case 'p': // pattern
             // strcpy(pvalue, optarg, sizeof(pvalue)-1);
             pflag = 1;
-            if (argc - optind - 1 % 2 == 1) // checks if odd number of args
+            ptn_cnt = (arg - (optind - 1)) / 2; // number of pattern time pairs
+            if (argc - optind - 1 % 2 == 1)     // checks if odd number of args
             {
                 fprintf(stderr, "TIME value needed after each PATTERN\n");
                 usage();
@@ -110,16 +166,16 @@ int main(int argc, char **argv)
             }
             for (int i = optind - 1; i < argc; i = i + 2) // grabs every other arg
             {
-                patterns[i / 2] = strtoul(argv[i], NULL, 0);
-                fprintf(stderr, "Pattern[%d] = %d"i/2,patterns[i/2]);
+                patterns[i - optind + 1 / 2] = strtoul(argv[i], NULL, 0);
+                // fprintf(stderr, "Pattern[%d/2] = %x\n",i,patterns[i/2]);
             }
             for (int j = optind; j < argc; j = j + 2) // grabs the other every other arg
             {
-                times[j / 2] = strtoul(argv[j], NULL, 0);
-                fprintf(stderr, "Time[%d] = %d"j/2,patterns[j/2]);
+                times[j - optind / 2] = strtoul(argv[j], NULL, 0);
+                // fprintf(stderr, "Time[%d/2] = %u\n",j,times[j/2]);
             }
             break;
-        case 'f': // file
+        case 'f':                   // file
             strcpy(fvalue, optarg); // copy file name
             fflag = 1;
             break;
@@ -157,37 +213,29 @@ int main(int argc, char **argv)
         usage();
         return 1;
     }
-    for (index = optind; index < argc; index++)
-    {
-        printf("Non-option argument %s\n", argv[index]);
-        usage();
-        return 1;
-    }
     signal(SIGINT, INThandler); // allow for exit with ^C
     while (1)
     {
         if (pflag == 1)
         {
-
-            if (vflag == 1)
+            for (int i = 1; i < ptn_cnt; i++)
             {
-                verbose();
-            }
-            else
-            {
-            // write patterns
+                // write pattern using devmen
+                if (vflag == 1)
+                {
+                    verbose(patterns[i], times[i]);
+                }
             }
         }
         else if (fflag == 1)
         {
-            if (vflag == 1)
+            for ()
             {
-                verbose();
-            }
-            else
-            {
-            // read file
-            // write patterns
+                // write pattern using devmen
+                if (vflag == 1)
+                {
+                    verbose(patterns[i], times[i]);
+                }
             }
         }
     }
