@@ -112,11 +112,11 @@ void INThandler(int sig)
     char c;
 
     signal(sig, SIG_IGN);
-    printf("\nOUCH, did you hit Ctrl-C?\n"
-           "Do you really want to quit? [y/n] \n");
+    fprintf(stdout, "Do you really want to quit? [y/n] \n");
     c = getchar();
     if (c == 'y' || c == 'Y')
         // I think this is where I would set the device back into hardware control
+        fprintf(stdout, "Setting back to hardware control.\n");
         exit(0);
     else
         signal(SIGINT, INThandler);
@@ -157,7 +157,7 @@ int main(int argc, char **argv)
         case 'p': // pattern
             // strcpy(pvalue, optarg, sizeof(pvalue)-1);
             pflag = 1;
-            ptn_cnt = (arg - (optind - 1)) / 2; // number of pattern time pairs
+            ptn_cnt = (argc - (optind - 1)) / 2; // number of pattern time pairs
             if (argc - optind - 1 % 2 == 1)     // checks if odd number of args
             {
                 fprintf(stderr, "TIME value needed after each PATTERN\n");
@@ -229,7 +229,7 @@ int main(int argc, char **argv)
         }
         else if (fflag == 1)
         {
-            for ()
+            for (int i = 1; i < ptn_cnt; i++)
             {
                 // write pattern using devmen
                 if (vflag == 1)
