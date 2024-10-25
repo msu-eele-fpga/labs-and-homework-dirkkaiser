@@ -164,7 +164,7 @@ void INThandler(int sig)
     {
         // I think this is where I would set the device back into hardware control
         devmem(0x00, HWCTRL); // writing a zero should set it to hardware control
-        fprintf(stdout, "Setting back to hardware control.\n");
+        fprintf(stdout, "\nSetting back to hardware control.\n");
         exit(0);
     }
     else
@@ -214,6 +214,8 @@ int main(int argc, char **argv)
             {
                 fprintf(stderr, "TIME value needed after each PATTERN\n");
                 usage();
+                devmem(0x00, HWCTRL); // writing a zero should set it to hardware control
+            fprintf(stdout, "\nSetting back to hardware control.\n");
                 return 1;
             }
             for (int i = optind - 1; i < argc; i = i + 2) // grabs every other arg
@@ -299,7 +301,7 @@ int main(int argc, char **argv)
                 verbose(patterns[i], times[i]);
             }
             devmem(patterns[i], LEDR);
-            sleep(times[i] * 1000);
+            usleep(times[i] * 1000);
         }
         // After done writing patterns from file - terminate
         devmem(0x00, HWCTRL);
@@ -319,9 +321,11 @@ int main(int argc, char **argv)
                     verbose(patterns[i], times[i]);
                 }
                 devmem(patterns[i], LEDR);
-                sleep(times[i] * 1000);
+                usleep(times[i] * 1000);
             }
         }
     }
+    devmem(0x00, HWCTRL); // writing a zero should set it to hardware control
+    fprintf(stdout, "\nSetting back to hardware control.\n");
     return 0;
 }
