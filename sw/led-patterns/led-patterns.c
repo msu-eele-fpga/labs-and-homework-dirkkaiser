@@ -113,7 +113,7 @@ void INThandler(int sig)
     char c;
 
     signal(sig, SIG_IGN);
-    fprintf(stdout, "\nDo you really want to quit? [y/n]\n");
+    fprintf(stdout, "\n Do you really want to quit? [y/n] \n");
     c = getchar();
     if (c == 'y' || c == 'Y')
     {
@@ -126,6 +126,41 @@ void INThandler(int sig)
         signal(SIGINT, INThandler);
         getchar(); // Get new line character
     }
+}
+
+/*
+ * devmem(pattern) - uses devmem to write patterns to leds.
+ * @pattern: pattern you want to write to led.
+ *
+ * This function is heavily based off of Prof Trevors devmem.c code...
+ * It should take in the hex value for the pattern and write it to our custom hardware.
+ *
+ */
+void devmem(uint32_t pattern)
+{
+    // This is the size of a page of memory in the system. Typically 4095 bytes.
+    const size_t PAGE_SIZE = sysconf(_SC_PAGE_SIZE);
+    // Open the /dev/mem file, which is an image of the main system memory
+    // We use synchronous write operations (0_SYNC) to ensure that the value
+	// is fully written to the underlying hardware before the write call returns.
+	int fd = open("/dev/mem", O_RDWR | O_SYNC);
+	if (fd == -1)
+	{
+		fprintf(stderr, "failed to open /dev/mem.\n");
+		return 1;
+	}
+    uint32_t page_aligned_addr = ADDRESS & ~(PAGE_SIZE - 1);
+
+    // Map a page of physical memory into virtual memory. See the mmap man page
+	uint32_t *page_virtual_addr = (uint32_t *)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, page_aligned_addr);
+	if (page_virtual_addr == MAP_FAILED)
+	{
+		fprintf(stderr, "failed to map memory.\n");
+		return 1;
+	}
+    uint32_t offset_in_page = ADDRESS & (PAGE_SIZE - 1);
+    volatile uint32_t *target_virtual_addr = page_virtual_addr + offset_in_page/sizeof(uint32_t*);
+    *target_virtual_addr = pattern;
 }
 
 //-----------------------------------------------------------------------------
@@ -219,12 +254,12 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    int line_cnt = 0; // counter for lines in file
     if (fflag == 1)
     {
     // opening the file from -f if there is one
     FILE *file = fopen(fvalue, "r"); // Open the file for reading
     char line[128]; // Buffer to hold each line
-    int line_cnt = 0; // counter for lines in file
     const char *delim = " ,"; // Delimiters: space and comma
     char *token; // for holding patterns and time
 
@@ -252,22 +287,24 @@ int main(int argc, char **argv)
         {
             for (int i = 0; i < ptn_cnt; i++)
             {
-                // write pattern using devmen
                 if (vflag == 1)
                 {
                     verbose(patterns[i], times[i]);
                 }
+                devmem(patterns[i]);
+                sleep(times[i]*1000);
             }
         }
         else if (fflag == 1)
         {
             for (int i = 0; i < line_cnt; i++)
-            {
-                // write pattern using devmen
+            {   
                 if (vflag == 1)
                 {
                     verbose(patterns[i], times[i]);
                 }
+                devmem(patterns[i]);
+                sleep(times[i]*1000);
             }
         }
     }
