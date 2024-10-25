@@ -42,8 +42,8 @@
 // Using global variables for the addresses of our custom hardware because I want to use
 // them in multiple functio
 const uint32_t HWCTRL = 0xff200000;
-const uint32_t BASEPRD = 0xff200002;
-const uint32_t LEDR = 0xff20004;
+const uint32_t BASEPRD = 0xff200004;
+const uint32_t LEDR = 0xff200008;
 
 //-----------------------------------------------------------------------------
 // Some Functions:
@@ -109,34 +109,6 @@ void verbose(uint32_t pattern, uint32_t time)
 }
 
 /*
- * INThandler() - function for the exiting using ^C.
- *
- * I totally just copied this from the example referenced in the book.
- * I'm not to sure what the argument even does.
- *
- */
-void INThandler(int sig)
-{
-    char c;
-
-    signal(sig, SIG_IGN);
-    fprintf(stdout, "\n Do you really want to quit? [y/n] \n");
-    c = getchar();
-    if (c == 'y' || c == 'Y')
-    {
-        // I think this is where I would set the device back into hardware control
-        devmem(0x00, HWCTRL); // writing a zero should set it to hardware control
-        fprintf(stdout, "Setting back to hardware control.\n");
-        exit(0);
-    }
-    else
-    {
-        signal(SIGINT, INThandler);
-        getchar(); // Get new line character
-    }
-}
-
-/*
  * devmem(cmd, ADDRESS) - uses devmem to write a command to a hardware address
  * @cmd: 8 bit command you want to write.
  * @address: memory address you want to write
@@ -172,6 +144,34 @@ void devmem(uint32_t cmd, uint32_t address)
     uint32_t offset_in_page = address & (PAGE_SIZE - 1);
     volatile uint32_t *target_virtual_addr = page_virtual_addr + offset_in_page / sizeof(uint32_t *);
     *target_virtual_addr = cmd;
+}
+
+/*
+ * INThandler() - function for the exiting using ^C.
+ *
+ * I totally just copied this from the example referenced in the book.
+ * I'm not to sure what the argument even does.
+ *
+ */
+void INThandler(int sig)
+{
+    char c;
+
+    signal(sig, SIG_IGN);
+    fprintf(stdout, "\n Do you really want to quit? [y/n] \n");
+    c = getchar();
+    if (c == 'y' || c == 'Y')
+    {
+        // I think this is where I would set the device back into hardware control
+        devmem(0x00, HWCTRL); // writing a zero should set it to hardware control
+        fprintf(stdout, "Setting back to hardware control.\n");
+        exit(0);
+    }
+    else
+    {
+        signal(SIGINT, INThandler);
+        getchar(); // Get new line character
+    }
 }
 
 //-----------------------------------------------------------------------------
