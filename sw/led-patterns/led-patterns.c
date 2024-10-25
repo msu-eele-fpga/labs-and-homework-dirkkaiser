@@ -113,7 +113,7 @@ void INThandler(int sig)
     char c;
 
     signal(sig, SIG_IGN);
-    fprintf(stdout, "\nDo you really want to quit? [y/n] \n");
+    fprintf(stdout, "\nDo you really want to quit? [y/n]\n");
     c = getchar();
     if (c == 'y' || c == 'Y')
     {
@@ -222,9 +222,22 @@ int main(int argc, char **argv)
     // opening the file from -f if there is one
     FILE *file = fopen(fvalue, "r"); // Open the file for reading
     char line[256]; // Buffer to hold each line
+    int line_cnt; // counter for lines in file
+    const char *delim = " ,"; // Delimiters: space, comma, period, exclamation mark
+    char *token;
     while (fgets(line, sizeof(line), file) != NULL) {
-        printf("%s", line); // Print each line
+        line_cnt++;
     }
+    rewind(file);
+    for (int i = 0; i <= line_cnt; i++)
+    {
+        fgets(line, sizeof(line), file)
+        token = strtok(line, delim);
+        patterns[i] = strtoul(token, NULL, 0);
+        token = strtok(NULL, delim);
+        times[i] = strtoul(token, NULL, 0);
+    }
+
     fclose(file); // Close the file
 
     signal(SIGINT, INThandler); // allow for exit with ^C
