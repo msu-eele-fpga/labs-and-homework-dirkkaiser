@@ -1,13 +1,13 @@
 /*
  * Dirk Kaiser - EELE467 Lab 8 "Creating LED Patterns with a C Program Using /dev/mem in Linux"
  * Montana State University - Fall 2024
- * 
- * This program will let you use the linux terminal to write different patterns to the 
+ *
+ * This program will let you use the linux terminal to write different patterns to the
  * Altera Cyclone V SoC FPGA. This part of the continued developement of our HW/SW codesign
- * project. 
- * 
+ * project.
+ *
  * I am really only puting this header here to see if Trevor even checks.
- * 
+ *
  *      /\     /\
  *     {  `---'  }
  *     {  O   O  }
@@ -16,17 +16,17 @@
  *       /     \    \_
  *      {       }\  )_\
  *      |  \_/  ) / /
- *       \__/  /(_/  
+ *       \__/  /(_/
  *         (__/
- * 
+ *
  *      Go Bobcats!
- * 
+ *
  */
 
 //-----------------------------------------------------------------------------
 
 // Standard shi
-#include <stdio.h> 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -37,6 +37,13 @@
 #include <ctype.h>    // for optget
 #include <signal.h>   // for exiting with ^C
 #include <string.h>   // for strcpy and strtoul
+
+//-----------------------------------------------------------------------------
+// Using global variables for the addresses of our custom hardware because I want to use
+// them in multiple functio
+const uint32_t HWCTRL = 0xff200000;
+const uint32_t BASEPRD = 0xff200002;
+const uint32_t LEDR = 0xff20004;
 
 //-----------------------------------------------------------------------------
 // Some Functions:
@@ -95,9 +102,9 @@ void dectobin(uint32_t dec, char *binArray)
  */
 void verbose(uint32_t pattern, uint32_t time)
 {
-    //patterns will only be 8 bits max + 1 for null character
-    char pattern_binArray[9];
-    dectobin(pattern, pattern_binArray);
+    // patterns will only be 8 bits max + 1 for null character
+    char pattern_binArray[9]; // I think there should be some way to dynamically allocate this array but idk
+    dectobin(pattern, pattern_binArray); 
     fprintf(stdout, "LED pattern = %s Display time = %u msec\n", pattern_binArray, time);
 }
 
@@ -118,6 +125,7 @@ void INThandler(int sig)
     if (c == 'y' || c == 'Y')
     {
         // I think this is where I would set the device back into hardware control
+        devmem(0x00, HWCTRL); // writing a zero should set it to hardware control
         fprintf(stdout, "Setting back to hardware control.\n");
         exit(0);
     }
@@ -129,38 +137,41 @@ void INThandler(int sig)
 }
 
 /*
- * devmem(pattern) - uses devmem to write patterns to leds.
- * @pattern: pattern you want to write to led.
+ * devmem(cmd, ADDRESS) - uses devmem to write a command to a hardware address
+ * @cmd: 8 bit command you want to write.
+ * @address: memory address you want to write
  *
  * This function is heavily based off of Prof Trevors devmem.c code...
- * It should take in the hex value for the pattern and write it to our custom hardware.
+ * It should take in the hex value and write it to our custom hardware.
+ * Originally I wanted this to just write to the LEDs however I realized that
+ * I would also need to use it to write to the software control register
+ * I don't know if how I am writing this is the best because it requires that you
+ * know all your hardware addresses, but I couldn't think of any different ways.
  *
  */
-void devmem(uint32_t pattern)
+void devmem(uint32_t cmd, uint32_t address)
 {
     // This is the size of a page of memory in the system. Typically 4095 bytes.
     const size_t PAGE_SIZE = sysconf(_SC_PAGE_SIZE);
     // Open the /dev/mem file, which is an image of the main system memory
     // We use synchronous write operations (0_SYNC) to ensure that the value
-	// is fully written to the underlying hardware before the write call returns.
-	int fd = open("/dev/mem", O_RDWR | O_SYNC);
-	if (fd == -1)
-	{
-		fprintf(stderr, "failed to open /dev/mem.\n");
-		return 1;
-	}
-    uint32_t page_aligned_addr = ADDRESS & ~(PAGE_SIZE - 1);
+    // is fully written to the underlying hardware before the write call returns.
+    int fd = open("/dev/mem", O_RDWR | O_SYNC);
+    if (fd == -1)
+    {
+        fprintf(stderr, "failed to open /dev/mem.\n");
+    }
+    uint32_t page_aligned_addr = address & ~(PAGE_SIZE - 1);
 
     // Map a page of physical memory into virtual memory. See the mmap man page
-	uint32_t *page_virtual_addr = (uint32_t *)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, page_aligned_addr);
-	if (page_virtual_addr == MAP_FAILED)
-	{
-		fprintf(stderr, "failed to map memory.\n");
-		return 1;
-	}
-    uint32_t offset_in_page = ADDRESS & (PAGE_SIZE - 1);
-    volatile uint32_t *target_virtual_addr = page_virtual_addr + offset_in_page/sizeof(uint32_t*);
-    *target_virtual_addr = pattern;
+    uint32_t *page_virtual_addr = (uint32_t *)mmap(NULL, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, page_aligned_addr);
+    if (page_virtual_addr == MAP_FAILED)
+    {
+        fprintf(stderr, "failed to map memory.\n");
+    }
+    uint32_t offset_in_page = address & (PAGE_SIZE - 1);
+    volatile uint32_t *target_virtual_addr = page_virtual_addr + offset_in_page / sizeof(uint32_t *);
+    *target_virtual_addr = cmd;
 }
 
 //-----------------------------------------------------------------------------
@@ -183,6 +194,8 @@ int main(int argc, char **argv)
 
     opterr = 0;
 
+    devmem(0x01, HWCTRL); // writing a 1 should set it software control
+
     while ((opt = getopt(argc, argv, "hvp:f:")) != -1) // get options - taken from GNU example
         switch (opt)
         {
@@ -197,7 +210,7 @@ int main(int argc, char **argv)
             // strcpy(pvalue, optarg, sizeof(pvalue)-1);
             pflag = 1;
             ptn_cnt = (argc - (optind - 1)) / 2; // number of pattern time pairs
-            if ((argc - optind - 1) % 2 == 1)     // checks if odd number of args
+            if ((argc - optind - 1) % 2 == 1)    // checks if odd number of args
             {
                 fprintf(stderr, "TIME value needed after each PATTERN\n");
                 usage();
@@ -241,7 +254,7 @@ int main(int argc, char **argv)
             usage();
             return 1;
         }
-    
+
     if (argc == 1) // no arguments
     {
         usage();
@@ -257,27 +270,41 @@ int main(int argc, char **argv)
     int line_cnt = 0; // counter for lines in file
     if (fflag == 1)
     {
-    // opening the file from -f if there is one
-    FILE *file = fopen(fvalue, "r"); // Open the file for reading
-    char line[128]; // Buffer to hold each line
-    const char *delim = " ,"; // Delimiters: space and comma
-    char *token; // for holding patterns and time
+        // opening the file from -f if there is one
+        FILE *file = fopen(fvalue, "r"); // Open the file for reading
+        char line[128];                  // Buffer to hold each line
+        const char *delim = " ,";        // Delimiters: space and comma
+        char *token;                     // for holding patterns and time
 
-    while (fgets(line, sizeof(line), file) != NULL) // counting how many lines there are
-    {
-        line_cnt++;
-    }
-    rewind(file); // reset to top of the file
+        while (fgets(line, sizeof(line), file) != NULL) // counting how many lines there are
+        {
+            line_cnt++;
+        }
+        rewind(file); // reset to top of the file
 
-    for (int i = 0; i < line_cnt; i++) // for each line add to our patterns and times to arrays
-    {
-        fgets(line, sizeof(line), file);
-        token = strtok(line, delim);
-        patterns[i] = strtoul(token, NULL, 0);
-        token = strtok(NULL, delim);
-        times[i] = strtoul(token, NULL, 0);
-    }
-    fclose(file); // Close the file
+        for (int i = 0; i < line_cnt; i++) // for each line add to our patterns and times to arrays
+        {
+            fgets(line, sizeof(line), file);
+            token = strtok(line, delim);
+            patterns[i] = strtoul(token, NULL, 0);
+            token = strtok(NULL, delim);
+            times[i] = strtoul(token, NULL, 0);
+        }
+        fclose(file); // Close the file
+
+        for (int i = 0; i < line_cnt; i++)
+        {
+            if (vflag == 1)
+            {
+                verbose(patterns[i], times[i]);
+            }
+            devmem(patterns[i], LEDR);
+            sleep(times[i] * 1000);
+        }
+        // After done writing patterns from file - terminate
+        devmem(0x00, HWCTRL);
+        fprintf(stdout, "Setting back to hardware control.\n");
+        exit(0);
     }
 
     signal(SIGINT, INThandler); // allow for exit with ^C
@@ -291,20 +318,8 @@ int main(int argc, char **argv)
                 {
                     verbose(patterns[i], times[i]);
                 }
-                devmem(patterns[i]);
-                sleep(times[i]*1000);
-            }
-        }
-        else if (fflag == 1)
-        {
-            for (int i = 0; i < line_cnt; i++)
-            {   
-                if (vflag == 1)
-                {
-                    verbose(patterns[i], times[i]);
-                }
-                devmem(patterns[i]);
-                sleep(times[i]*1000);
+                devmem(patterns[i], LEDR);
+                sleep(times[i] * 1000);
             }
         }
     }
