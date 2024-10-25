@@ -73,7 +73,7 @@ void usage()
  */
 void dectobin(uint32_t dec, char *binArray)
 {
-    int bits = [8]; // this should probably be done with a some sort of sizeof() function
+    int bits = 8; // this should probably be done with a some sort of sizeof() function
     // but that wasnt working so it's now just 8 cause every pattern is only 8 bits
     for (int i = 0; i < bits; i++)
     {
@@ -162,7 +162,7 @@ int main(int argc, char **argv)
             // strcpy(pvalue, optarg, sizeof(pvalue)-1);
             pflag = 1;
             ptn_cnt = (argc - (optind - 1)) / 2; // number of pattern time pairs
-            if (argc - optind - 1 % 2 == 1)     // checks if odd number of args
+            if ((argc - optind - 1) % 2 == 1)     // checks if odd number of args
             {
                 fprintf(stderr, "TIME value needed after each PATTERN\n");
                 usage();
@@ -206,17 +206,27 @@ int main(int argc, char **argv)
             usage();
             return 1;
         }
-    if (argc == 1)
+    
+    if (argc == 1) // no arguments
     {
         usage();
         return 1;
     }
-    if (pflag == 1 && fflag == 1)
+    if (pflag == 1 && fflag == 1) // both -p and -f is a no no
     {
         fprintf(stderr, "Cannout use option -p and -f at the same time.\n\n");
         usage();
         return 1;
     }
+
+    // opening the file from -f if there is one
+    FILE *file = fopen(fvalue, "r"); // Open the file for reading
+    char line[256]; // Buffer to hold each line
+    while (fgets(line, sizeof(line), file) != NULL) {
+        printf("%s", line); // Print each line
+    }
+    fclose(file); // Close the file
+
     signal(SIGINT, INThandler); // allow for exit with ^C
     while (1)
     {
