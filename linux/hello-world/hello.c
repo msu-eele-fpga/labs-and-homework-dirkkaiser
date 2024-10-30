@@ -14,7 +14,6 @@ static int __init init_hello(void)
 static void __exit cleanup_hello(void)
 {
     printk("Goodbye, cruel world\n");
-    return 0;
 }
 module_init(init_hello);
 module_exit(cleanup_hello);
