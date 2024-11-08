@@ -197,19 +197,6 @@ end entity de10nano_top;
 
 architecture de10nano_arch of de10nano_top is
 
-  component pwm_controller is
-	 generic (
-			CLK_PERIOD : time := 20 ns
-		);
-		port (
-			clk			: in std_ulogic;
-			rst			: in std_ulogic;
-			period		: in unsigned(23 downto 0);
-			duty_cycle	: in unsigned(29 downto 0);
-			output		: out std_ulogic
-		);
-	end component pwm_controller;
-
   component soc_system is
     port (
       hps_io_hps_io_emac1_inst_tx_clk : out   std_ulogic;
@@ -278,11 +265,12 @@ architecture de10nano_arch of de10nano_top is
       memory_oct_rzqin                : in    std_ulogic;
       clk_clk                         : in    std_ulogic;
       reset_reset_n                   : in    std_ulogic;
-		led_patterns_push_button        : in    std_ulogic                     := 'X';             -- push_button
-      led_patterns_led          		  : out   std_ulogic_vector(7 downto 0);                     -- led
-      led_patterns_switches     		  : in    std_ulogic_vector(3 downto 0)  := (others => 'X')  -- switches
-    );
-  end component soc_system;
+		rgb_controller_red_output       : out   std_logic;                                        -- red_output
+      rgb_controller_green_output     : out   std_logic;                                        -- green_output
+      rgb_controller_blue_output      : out   std_logic                                         -- blue_output
+	);
+	
+end component soc_system;
 
 constant system_clock_period : time := 20 ns;
 
@@ -376,18 +364,10 @@ u0 : component soc_system
 
       clk_clk       => fpga_clk1_50,
       reset_reset_n => push_button_n(1), -- hook up to your reset signal; note that reset_reset_n is *active-low*
-		led_patterns_push_button	=>	not push_button_n(0),      
-      led_patterns_led				=>	led,
-      led_patterns_switches      =>	sw  
+		rgb_controller_red_output       => gpio_1(1),       -- rgb_controller.red_output
+      rgb_controller_green_output     => gpio_1(3),     --               .green_output
+      rgb_controller_blue_output      => gpio_1(5)       --               .blue_output
     );
 
-	PWM0: component pwm_controller
-		port map(
-			clk	=> fpga_clk1_50,
-			rst	=> not push_button_n(1),
-			period => "000001000000000000000000",
-			duty_cycle => "010000000000000000000000000000",
-			output => gpio_1(0)
-		);
 
 end architecture de10nano_arch;
